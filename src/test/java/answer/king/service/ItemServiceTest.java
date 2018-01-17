@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import answer.king.exception.InvalidItemException;
 import answer.king.model.Item;
 import answer.king.repo.ItemRepository;
 import junit.framework.TestCase;
@@ -54,44 +55,66 @@ public class ItemServiceTest extends TestCase {
 	
 	@Test
 	public void testSaveWithMissingName() {
-		Item item = createItem(null, "", new BigDecimal("1.99"));
-		Item persistedItem = createItem(1L, "", new BigDecimal("1.99"));
+		boolean exceptionThrown = false;
 		
-		Mockito.when(itemRepository.save(item)).thenReturn(persistedItem);
+		try {
+			Item item = createItem(null, "", new BigDecimal("1.99"));
+			@SuppressWarnings("unused")
+			Item returnedItem = itemService.save(item);	
+		} catch (InvalidItemException e) {
+			exceptionThrown = true;
+			assertEquals("No name specified", e.getMessage());
+		}
 		
-		Item returnedItem = itemService.save(item);
-		assertEquals(persistedItem.getId(), returnedItem.getId());
-		assertEquals(persistedItem.getName(), returnedItem.getName());
-		assertEquals(persistedItem.getPrice(), returnedItem.getPrice());
-		assertNull(returnedItem.getOrder());
+		assertTrue(exceptionThrown);
 	}
 	
 	@Test
 	public void testSaveWithMissingPrice() {
-		Item item = createItem(null, "Burger", null);
-		Item persistedItem = createItem(1L, "Burger", null);
+		boolean exceptionThrown = false;
 		
-		Mockito.when(itemRepository.save(item)).thenReturn(persistedItem);
+		try {
+			Item item = createItem(null, "Burger", null);
+			@SuppressWarnings("unused")
+			Item returnedItem = itemService.save(item);	
+		} catch (InvalidItemException e) {
+			exceptionThrown = true;
+			assertEquals("No price specified", e.getMessage());
+		}
 		
-		Item returnedItem = itemService.save(item);
-		assertEquals(persistedItem.getId(), returnedItem.getId());
-		assertEquals(persistedItem.getName(), returnedItem.getName());
-		assertNull(persistedItem.getPrice());
-		assertNull(returnedItem.getOrder());
+		assertTrue(exceptionThrown);
 	}
 	
+	@Test
 	public void testSaveWithNegativePrice() {
-		Item item = createItem(null, "Burger", new BigDecimal("-1.99"));
-		Item persistedItem = createItem(1L, "Burger", new BigDecimal("-1.99"));
+		boolean exceptionThrown = false;
 		
-		Mockito.when(itemRepository.save(item)).thenReturn(persistedItem);
+		try {
+			Item item = createItem(null, "Burger", new BigDecimal("-1.99"));
+			@SuppressWarnings("unused")
+			Item returnedItem = itemService.save(item);	
+		} catch (InvalidItemException e) {
+			exceptionThrown = true;
+			assertEquals("Price must be greater than zero", e.getMessage());
+		}
 		
-		Item returnedItem = itemService.save(item);
-		assertEquals(persistedItem.getId(), returnedItem.getId());
-		assertEquals(persistedItem.getName(), returnedItem.getName());
-		assertEquals(persistedItem.getPrice(), returnedItem.getPrice());
+		assertTrue(exceptionThrown);
+	}
+	
+	@Test
+	public void testSaveWithZeroPrice() {
+		boolean exceptionThrown = false;
 		
-		assertNull(returnedItem.getOrder());
+		try {
+			Item item = createItem(null, "Burger", new BigDecimal("0"));
+			@SuppressWarnings("unused")
+			Item returnedItem = itemService.save(item);	
+		} catch (InvalidItemException e) {
+			exceptionThrown = true;
+			assertEquals("Price must be greater than zero", e.getMessage());
+		}
+		
+		assertTrue(exceptionThrown);
 	}
 	
 	private Item createItem(Long id, String name, BigDecimal price) {
